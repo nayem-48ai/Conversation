@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to v2ray</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            min-height: 100vh; /* Ensure footer stays at the bottom */
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center; /* Center the heading */
+        }
+        .input-container {
+            position: relative;
+            width: 400px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .clear-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #888;
+            padding: 0;
+            line-height: 1;
+        }
+        .clear-button:hover {
+            color: #333;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #eee;
+            background-color: #f9f9f9;
+            width: 400px;
+            box-sizing: border-box;
+            word-break: break-all;
+        }
+        #outputURL {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f0f0f0;
+            width: 400px;
+            box-sizing: border-box;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-word;
+        }
+        footer {
+            margin-top: auto; /* Push footer to the bottom */
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>JSON to V2ray Converter</h1>
+    <div class="input-container">
+        <textarea id="jsonInput" placeholder="Enter JSON configuration here..."></textarea>
+        <button class="clear-button" onclick="clearInput()">×</button>
+    </div>
+    <div class="button-container">
+        <button onclick="convertToVMessURL()">Convert to VMess</button>
+        <button onclick="convertToVLessURL()">Convert to VLess</button>
+        <button onclick="convertToTrojanURL()">Convert to Trojan</button>
+    </div>
+    <div id="result" style="display: none;"></div>
+    <div id="outputURL" style="display: none;"></div>
+
+    <script>
+        function clearInput() {
+            document.getElementById("jsonInput").value = "";
+            document.getElementById("outputURL").style.display = "none";
+            document.getElementById("result").style.display = "none";
+        }
+
+        function convertToVMessURL() {
+            const jsonText = document.getElementById("jsonInput").value;
+            try {
+                const config = JSON.parse(jsonText);
+                const address = config.outbounds[0]?.settings?.vnext[0]?.address;
+                const port = config.outbounds[0]?.settings?.vnext[0]?.port;
+                const id = config.outbounds[0]?.settings?.vnext[0]?.users[0]?.id;
+                const alterId = config.outbounds[0]?.settings?.vnext[0]?.users[0]?.alterId;
+                const net = config.outbounds[0]?.streamSettings?.network;
+                const path = config.outbounds[0]?.streamSettings?.wsSettings?.path;
+                const type = config.outbounds[0]?.streamSettings?.type;
+                const host = config.outbounds[0]?.streamSettings?.wsSettings?.headers?.Host;
+                const tls = config.outbounds[0]?.streamSettings?.security;
+                const ps = config.outbounds[0]?.tag || "VMess Server";
+                const v = "2";
+
+                if (config.outbounds[0]?.protocol === "vmess" && address && port && id !== undefined && alterId !== undefined) {
+                    const vmessJson = { v, ps, add: address, port, id, aid: alterId, net, path, type, host, tls };
+                    const base64Vmess = btoa(JSON.stringify(vmessJson));
+                    const vmessURL = `vmess://${base64Vmess}`;
+                    copyToClipboard(vmessURL);
+                    displayResult("VMess URL copied to clipboard!");
+                    showOutputURL(vmessURL);
+                } else {
+                    alert("Invalid VMess JSON format.");
+                    hideOutputURL();
+                }
+            } catch (error) {
+                alert("Invalid JSON format: " + error.message);
+                hideOutputURL();
+            }
+        }
+
+        function convertToVLessURL() {
+            const jsonText = document.getElementById("jsonInput").value;
+            try {
+                const config = JSON.parse(jsonText);
+                const address = config.outbounds[0]?.settings?.vnext[0]?.address;
+                const port = config.outbounds[0]?.settings?.vnext[0]?.port;
+                const id = config.outbounds[0]?.settings?.vnext[0]?.users[0]?.id;
+                const net = config.outbounds[0]?.streamSettings?.network;
+                const path = config.outbounds[0]?.streamSettings?.wsSettings?.path;
+                const host = config.outbounds[0]?.streamSettings?.wsSettings?.headers?.Host;
+                const security = config.outbounds[0]?.streamSettings?.security;
+                const sni = config.outbounds[0]?.streamSettings?.tlsSettings?.serverName;
+                const flow = config.outbounds[0]?.streamSettings?.flow;
+                const ps = config.outbounds[0]?.tag || "VLess Server";
+
+                if (config.outbounds[0]?.protocol === "vless" && address && port && id) {
+                    let vlessURL = `vless://${id}@${address}:${port}?`;
+                    if (security === "tls") {
+                        vlessURL += `security=tls&sni=${sni || address}&`;
+                    }
+                    if (net) {
+                        vlessURL += `type=${net}&`;
+                        if (net === "ws" && path) {
+                            vlessURL += `path=${path}&host=${host || address}&`;
+                        } else if (net === "grpc" && config.outbounds[0]?.streamSettings?.grpcSettings?.serviceName) {
+                            vlessURL += `serviceName=${config.outbounds[0].streamSettings.grpcSettings.serviceName}&`;
+                        }
+                    }
+                    if (flow) {
+                        vlessURL += `flow=${flow}&`;
+                    }
+                    vlessURL += `#${encodeURIComponent(ps.trim())}`;
+
+                    if (vlessURL.endsWith('&')) {
+                        vlessURL = vlessURL.slice(0, -1);
+                    }
+
+                    copyToClipboard(vlessURL);
+                    displayResult("VLess URL copied to clipboard!");
+                    showOutputURL(vlessURL);
+                } else {
+                    alert("Invalid VLess JSON format.");
+                    hideOutputURL();
+                }
+            } catch (error) {
+                alert("Invalid JSON format: " + error.message);
+                hideOutputURL();
+            }
+        }
+
+        function convertToTrojanURL() {
+            const jsonText = document.getElementById("jsonInput").value;
+            try {
+                const config = JSON.parse(jsonText);
+                const address = config.outbounds[0]?.settings?.servers[0]?.address;
+                const port = config.outbounds[0]?.settings?.servers[0]?.port;
+                const password = config.outbounds[0]?.settings?.servers[0]?.password;
+                const network = config.outbounds[0]?.streamSettings?.network;
+                const path = config.outbounds[0]?.streamSettings?.wsSettings?.path;
+                const host = config.outbounds[0]?.streamSettings?.wsSettings?.headers?.Host;
+                const security = config.outbounds[0]?.streamSettings?.security;
+                const sni = config.outbounds[0]?.streamSettings?.tlsSettings?.serverName;
+                const serverName = config.outbounds[0]?.tag || "Trojan Server";
+
+                if (config.outbounds[0]?.protocol === "trojan" && address && port && password) {
+                    let url = `trojan://${password}@${address}:${port}?`;
+                    if (security === "tls") {
+                        url += `security=tls&sni=${sni || address}&`;
+                    }
+                    if (network === "ws" && path) {
+                        url += `type=ws&path=${path}&host=${host || address}&`;
+                    }
+                    url += `#${encodeURIComponent(serverName.trim())}`;
+
+                    if (url.endsWith('&')) {
+                        url = url.slice(0, -1);
+                    }
+
+                    copyToClipboard(url);
+                    displayResult("Trojan URL copied to clipboard!");
+                    showOutputURL(url);
+                } else {
+                    alert("Invalid Trojan JSON format.");
+                    hideOutputURL();
+                }
+            } catch (error) {
+                alert("Invalid JSON format: " + error.message);
+                hideOutputURL();
+            }
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function displayResult(message) {
+            document.getElementById("result").innerText = message;
+            document.getElementById("result").style.display = "block";
+        }
+
+        function showOutputURL(url) {
+            const outputDiv = document.getElementById("outputURL");
+            outputDiv.innerText = url;
+            outputDiv.style.display = "block";
+        }
+
+        function hideOutputURL() {
+            document.getElementById("outputURL").style.display = "none";
+        }
+    </script>
+    <footer>
+        ©<a href="https://t.me/Tnayem48">Tnayem48 Pro</a></br>under testing 
+    </footer>
+</body>
+</html>
