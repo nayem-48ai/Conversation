@@ -3,261 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON to v2ray</title>
+    <title>Config Decryptor | Tnayem48</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            min-height: 100vh; /* Ensure footer stays at the bottom */
-            box-sizing: border-box;
-        }
-        h1 {
-            text-align: center; /* Center the heading */
-        }
-        .input-container {
-            position: relative;
-            width: 400px;
-        }
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            resize: vertical;
-        }
-        .clear-button {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: #888;
-            padding: 0;
-            line-height: 1;
-        }
-        .clear-button:hover {
-            color: #333;
-        }
-        .button-container {
-            display: flex;
-            gap: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            cursor: pointer;
-        }
-        #result {
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #eee;
-            background-color: #f9f9f9;
-            width: 400px;
-            box-sizing: border-box;
-            word-break: break-all;
-        }
-        #outputURL {
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            background-color: #f0f0f0;
-            width: 400px;
-            box-sizing: border-box;
-            white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 14px;
-            word-break: break-word;
-        }
-        footer {
-            margin-top: auto; /* Push footer to the bottom */
-            padding: 10px;
-            text-align: center;
-            font-size: 0.8em;
-            color: #555;
-        }
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'Fira Code', monospace; }
+        .copy-badge { cursor: pointer; transition: all 0.2s; }
+        .copy-badge:active { transform: scale(0.9); }
+        .card-grad { background: linear-gradient(145deg, rgba(30,41,59,0.4) 0%, rgba(15,23,42,0.8) 100%); }
+        .social-btn { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .social-btn:hover { transform: translateY(-3px) scale(1.1); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
     </style>
 </head>
-<body>
-    <h1>JSON to V2ray Converter</h1>
-    <div class="input-container">
-        <textarea id="jsonInput" placeholder="Enter JSON configuration here..."></textarea>
-        <button class="clear-button" onclick="clearInput()">×</button>
+<body class="p-4 md:p-8">
+
+    <div class="fixed top-4 left-4 z-50">
+        <a href="https://www.facebook.com/share/1AfRpG4foX/" target="_blank" class="social-btn flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-900/40">
+            <i class="fab fa-facebook-f text-xl"></i>
+        </a>
     </div>
-    <div class="button-container">
-        <button onclick="convertToVMessURL()">Convert to VMess</button>
-        <button onclick="convertToVLessURL()">Convert to VLess</button>
-        <button onclick="convertToTrojanURL()">Convert to Trojan</button>
+    <div class="fixed top-4 right-4 z-50">
+        <a href="https://t.me/Tnayem48" target="_blank" class="social-btn flex items-center justify-center w-12 h-12 bg-sky-500 text-white rounded-full shadow-lg shadow-sky-900/40">
+            <i class="fab fa-telegram-plane text-xl"></i>
+        </a>
     </div>
-    <div id="result" style="display: none;"></div>
-    <div id="outputURL" style="display: none;"></div>
+
+    <div class="max-w-7xl mx-auto min-h-screen pb-20">
+        <header class="text-center mb-10 pt-8">
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-2">
+                Universal Config Parser
+            </h1>
+            <div class="mt-2 text-xs font-mono text-cyan-500/50">Admin & Author: Tnayem48</div>
+        </header>
+        
+        <div class="grid grid-cols-1 gap-4 mb-8">
+            <textarea id="jsonInput" class="w-full h-32 p-4 rounded-xl bg-slate-800 border border-slate-700 focus:ring-2 focus:ring-cyan-500 outline-none text-sm mono shadow-inner transition-all" placeholder="এখানে আপনার JSON কোডটি পেস্ট করুন..."></textarea>
+            
+            <div class="flex flex-col md:flex-row gap-3">
+                <div class="relative flex-1">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="সার্চ করুন (নাম বা মোড)..." class="w-full pl-11 pr-4 py-3 rounded-lg bg-slate-800 border border-slate-700 outline-none focus:border-cyan-500 transition">
+                </div>
+                <button onclick="processData()" class="px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-lg transition shadow-lg shadow-cyan-900/20 active:scale-95">
+                    PARSE CONFIG <i class="fas fa-bolt ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="output"></div>
+    </div>
+
+    <footer class="mt-1 py-10 border-t border-slate-800 text-center">
+        <div class="text-slate-400 text-sm font-medium">
+            Developed with <i class="fas fa-heart text-red-500 mx-1"></i> by <span class="text-cyan-400 font-bold tracking-wider">Tnayem48</span>
+        </div>
+        <div class="mt-3 flex justify-center gap-4 text-slate-600 text-lg">
+            <i class="fab fa-html5"></i>
+            <i class="fab fa-js"></i>
+            <i class="fab fa-css3-alt"></i>
+        </div>
+    </footer>
 
     <script>
-        function clearInput() {
-            document.getElementById("jsonInput").value = "";
-            document.getElementById("outputURL").style.display = "none";
-            document.getElementById("result").style.display = "none";
-        }
+        let allConfigs = [];
 
-        function convertToVMessURL() {
-            const jsonText = document.getElementById("jsonInput").value;
+        function decodeV2ray(encodedStr) {
+            if (!encodedStr) return null;
             try {
-                const config = JSON.parse(jsonText);
-                const address = config.outbounds[0]?.settings?.vnext[0]?.address;
-                const port = config.outbounds[0]?.settings?.vnext[0]?.port;
-                const id = config.outbounds[0]?.settings?.vnext[0]?.users[0]?.id;
-                const alterId = config.outbounds[0]?.settings?.vnext[0]?.users[0]?.alterId;
-                const net = config.outbounds[0]?.streamSettings?.network;
-                const path = config.outbounds[0]?.streamSettings?.wsSettings?.path;
-                const type = config.outbounds[0]?.streamSettings?.type;
-                const host = config.outbounds[0]?.streamSettings?.wsSettings?.headers?.Host;
-                const tls = config.outbounds[0]?.streamSettings?.security;
-                const ps = config.outbounds[0]?.tag || "VMess Server";
-                const v = "2";
-
-                if (config.outbounds[0]?.protocol === "vmess" && address && port && id !== undefined && alterId !== undefined) {
-                    const vmessJson = { v, ps, add: address, port, id, aid: alterId, net, path, type, host, tls };
-                    const base64Vmess = btoa(JSON.stringify(vmessJson));
-                    const vmessURL = `vmess://${base64Vmess}`;
-                    copyToClipboard(vmessURL);
-                    displayResult("VMess URL copied to clipboard!");
-                    showOutputURL(vmessURL);
-                } else {
-                    alert("Invalid VMess JSON format.");
-                    hideOutputURL();
+                if (encodedStr.includes('://')) return encodedStr;
+                const decoded = atob(encodedStr);
+                // ডিটেক্ট করবে যদি ডিকোড করা স্ট্রিংটি ভ্যালিড কনফিগ হয়
+                if (decoded.includes('vmess') || decoded.includes('vless') || decoded.includes('trojan') || decoded.includes('"add"')) {
+                    return decoded;
                 }
-            } catch (error) {
-                alert("Invalid JSON format: " + error.message);
-                hideOutputURL();
+                return encodedStr;
+            } catch (e) {
+                return encodedStr;
             }
         }
 
-        function convertToVLessURL() {
-            const jsonText = document.getElementById("jsonInput").value;
+        function copyToClipboard(text, el) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalContent = el.innerHTML;
+                el.innerHTML = "COPIED!";
+                el.classList.add("!bg-green-600", "!text-white");
+                setTimeout(() => {
+                    el.innerHTML = originalContent;
+                    el.classList.remove("!bg-green-600", "!text-white");
+                }, 1000);
+            });
+        }
+
+        function processData() {
+            const input = document.getElementById('jsonInput').value.trim();
+            if(!input) return alert("অনুগ্রহ করে JSON কোড দিন!");
+            
             try {
-                const config = JSON.parse(jsonText);
-                const address = config.outbounds[0]?.settings?.vnext[0]?.address;
-                const port = config.outbounds[0]?.settings?.vnext[0]?.port;
-                const id = config.outbounds[0]?.settings?.vnext[0]?.users[0]?.id;
-                const net = config.outbounds[0]?.streamSettings?.network;
-                const path = config.outbounds[0]?.streamSettings?.wsSettings?.path;
-                const host = config.outbounds[0]?.streamSettings?.wsSettings?.headers?.Host;
-                const security = config.outbounds[0]?.streamSettings?.security;
-                const sni = config.outbounds[0]?.streamSettings?.tlsSettings?.serverName;
-                const flow = config.outbounds[0]?.streamSettings?.flow;
-                const ps = config.outbounds[0]?.tag || "VLess Server";
+                let rawData = JSON.parse(input);
+                
+                // আপনার প্রথম ও দ্বিতীয় JSON-এর পার্থক্য হ্যান্ডেল করা
+                allConfigs = rawData.map(item => {
+                    if (typeof item === 'string') {
+                        return JSON.parse(item); // Stringified JSON হ্যান্ডলার
+                    }
+                    return item; // Direct Object JSON হ্যান্ডলার
+                });
 
-                if (config.outbounds[0]?.protocol === "vless" && address && port && id) {
-                    let vlessURL = `vless://${id}@${address}:${port}?`;
-                    if (security === "tls") {
-                        vlessURL += `security=tls&sni=${sni || address}&`;
-                    }
-                    if (net) {
-                        vlessURL += `type=${net}&`;
-                        if (net === "ws" && path) {
-                            vlessURL += `path=${path}&host=${host || address}&`;
-                        } else if (net === "grpc" && config.outbounds[0]?.streamSettings?.grpcSettings?.serviceName) {
-                            vlessURL += `serviceName=${config.outbounds[0].streamSettings.grpcSettings.serviceName}&`;
-                        }
-                    }
-                    if (flow) {
-                        vlessURL += `flow=${flow}&`;
-                    }
-                    vlessURL += `#${encodeURIComponent(ps.trim())}`;
-
-                    if (vlessURL.endsWith('&')) {
-                        vlessURL = vlessURL.slice(0, -1);
-                    }
-
-                    copyToClipboard(vlessURL);
-                    displayResult("VLess URL copied to clipboard!");
-                    showOutputURL(vlessURL);
-                } else {
-                    alert("Invalid VLess JSON format.");
-                    hideOutputURL();
-                }
-            } catch (error) {
-                alert("Invalid JSON format: " + error.message);
-                hideOutputURL();
+                renderUI(allConfigs);
+            } catch (e) {
+                console.error(e);
+                alert("JSON ফরম্যাটটি সঠিক নয়। দয়া করে পূর্ণাঙ্গ কোডটি পেস্ট করুন।");
             }
         }
 
-        function convertToTrojanURL() {
-            const jsonText = document.getElementById("jsonInput").value;
-            try {
-                const config = JSON.parse(jsonText);
-                const address = config.outbounds[0]?.settings?.servers[0]?.address;
-                const port = config.outbounds[0]?.settings?.servers[0]?.port;
-                const password = config.outbounds[0]?.settings?.servers[0]?.password;
-                const network = config.outbounds[0]?.streamSettings?.network;
-                const path = config.outbounds[0]?.streamSettings?.wsSettings?.path;
-                const host = config.outbounds[0]?.streamSettings?.wsSettings?.headers?.Host;
-                const security = config.outbounds[0]?.streamSettings?.security;
-                const sni = config.outbounds[0]?.streamSettings?.tlsSettings?.serverName;
-                const serverName = config.outbounds[0]?.tag || "Trojan Server";
+        function renderUI(dataList) {
+            const output = document.getElementById('output');
+            output.innerHTML = "";
 
-                if (config.outbounds[0]?.protocol === "trojan" && address && port && password) {
-                    let url = `trojan://${password}@${address}:${port}?`;
-                    if (security === "tls") {
-                        url += `security=tls&sni=${sni || address}&`;
-                    }
-                    if (network === "ws" && path) {
-                        url += `type=ws&path=${path}&host=${host || address}&`;
-                    }
-                    url += `#${encodeURIComponent(serverName.trim())}`;
+            // ক্যাটাগরি গ্রুপিং (যদি category অবজেক্ট না থাকে তবে category_id ব্যবহার করবে)
+            const groups = dataList.reduce((acc, item) => {
+                const catName = (item.category && item.category.name) ? item.category.name : `Category ${item.category_id}`;
+                if (!acc[catName]) acc[catName] = [];
+                acc[catName].push(item);
+                return acc;
+            }, {});
 
-                    if (url.endsWith('&')) {
-                        url = url.slice(0, -1);
-                    }
+            for (const catName in groups) {
+                const firstItem = groups[catName][0];
+                let catColor = (firstItem.category && firstItem.category.color) ? firstItem.category.color : "#0ea5e9";
+                if(catColor.length > 7) catColor = "#3b82f6"; // কালার কোড ঠিক করা
 
-                    copyToClipboard(url);
-                    displayResult("Trojan URL copied to clipboard!");
-                    showOutputURL(url);
-                } else {
-                    alert("Invalid Trojan JSON format.");
-                    hideOutputURL();
-                }
-            } catch (error) {
-                alert("Invalid JSON format: " + error.message);
-                hideOutputURL();
+                let section = `
+                    <div class="mb-12 category-section">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center gap-3" style="color: ${catColor}">
+                            <div class="w-1.5 h-6 rounded-full" style="background: ${catColor}"></div>
+                            ${catName}
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                `;
+
+                groups[catName].forEach(config => {
+                    const v2rayUrl = decodeV2ray(config.config_v2ray);
+                    const server = config.server || {};
+                    const auth = config.auth || {};
+                    const payload = config.config_payload || {};
+
+                    section += `
+                        <div class="config-card card-grad rounded-2xl p-6 border border-slate-800 hover:border-cyan-500/40 transition-all duration-300 shadow-xl group" data-name="${config.name.toLowerCase()}" data-mode="${config.mode.toLowerCase()}">
+                            <div class="flex items-start gap-4 mb-5">
+                                <div class="relative">
+                                    <img src="${config.icon}" class="w-14 h-14 rounded-2xl shadow-lg border border-slate-700 object-cover" onerror="this.src='https://via.placeholder.com/60'">
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-slate-900 rounded-full"></div>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <h3 class="font-bold text-slate-100 text-lg truncate">${config.name}</h3>
+                                    <div class="flex gap-2 items-center">
+                                        <span class="text-[9px] font-black text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded uppercase tracking-widest">${config.mode}</span>
+                                        ${config.tls_version ? `<span class="text-[9px] text-slate-500 font-bold">${config.tls_version}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                <div class="grid grid-cols-2 gap-2">
+                                    ${renderItem("Host", server.host)}
+                                    ${renderItem("Port", server.port || config.hy_port)}
+                                </div>
+                                ${renderItem("Username", auth.username)}
+                                ${renderItem("Password", auth.password)}
+                                ${renderItem("SNI", payload.sni)}
+                                ${renderItem("V2Ray URL", v2rayUrl)}
+                                ${renderItem("Payload", payload.payload)}
+                                ${renderItem("UID", auth.v2ray_uuid)}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                section += `</div></div>`;
+                output.innerHTML += section;
             }
         }
 
-        function copyToClipboard(text) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text);
-            } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand("copy");
-                document.body.removeChild(textArea);
-            }
+        function renderItem(label, value) {
+            if (!value || value === null || value === "") return "";
+            return `
+                <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/50 hover:bg-slate-900 transition-colors">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">${label}</span>
+                        <button onclick="copyToClipboard('${value.toString().replace(/'/g, "\\'")}', this)" 
+                                class="copy-badge text-[9px] font-bold bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded hover:bg-cyan-500 hover:text-white transition-all">
+                                <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="mono text-[10px] text-slate-300 break-all line-clamp-1 group-hover:line-clamp-none transition-all">${value}</div>
+                </div>
+            `;
         }
 
-        function displayResult(message) {
-            document.getElementById("result").innerText = message;
-            document.getElementById("result").style.display = "block";
-        }
-
-        function showOutputURL(url) {
-            const outputDiv = document.getElementById("outputURL");
-            outputDiv.innerText = url;
-            outputDiv.style.display = "block";
-        }
-
-        function hideOutputURL() {
-            document.getElementById("outputURL").style.display = "none";
+        function filterCards() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.config-card');
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name');
+                const mode = card.getAttribute('data-mode');
+                card.style.display = (name.includes(query) || mode.includes(query)) ? "block" : "none";
+            });
         }
     </script>
-    <footer>
-        ©<a href="https://t.me/Tnayem48">Tnayem48 Pro</a></br>under testing 
-    </footer>
 </body>
 </html>
